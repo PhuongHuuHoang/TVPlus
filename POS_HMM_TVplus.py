@@ -129,10 +129,6 @@ class HMMPOS(object):
     def f_run(self):
         self.f_testHMM()
 
-
-    
-          
-
 def main():
     POS = HMMPOS()
     POS.f_run()
