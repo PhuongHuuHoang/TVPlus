@@ -1,13 +1,17 @@
 #!/usr/bin/python
-
-##  This program is written by Phuong H. Hoang on October 03 2015 ##
-##  POS tagging using HMM for Vietnamese documents                ##
-
 # -*- coding: utf8 -*-
+
+"""
+    This program is written by Phuong H. Hoang on October 03 2015
+    Task: Using HMM for POS tagging Vietnamese documents
+"""
+
+
 from __future__ import print_function
 import codecs
 import nltk
 import os, re
+
 
 class HMMPOS(object):
 
@@ -15,17 +19,27 @@ class HMMPOS(object):
         pass
 
     def f_readFile(self, fileName):
+        """
+        Read text from document
+        Input: file location
+        Output: raw texts in utf-8 code
+        """
         f = codecs.open(fileName,'rb','utf-8')
         return f.read()
 
     def f_token(self,text):
+        """
+        Token read text
+        Input: raw text
+        Output: token text 
+        """
         data = []
         tmp  = [] 
         text_token = nltk.word_tokenize(text)
         #print (text_token)
         for idx in range(len(text_token)):
             if "./CH" in text_token[idx]:
-                tmp.append(tuple(('.','.')))
+                tmp.append(tuple(('.','.'))) # punctuation
                 data.append(tmp)
                 tmp = []
             else:
@@ -33,11 +47,16 @@ class HMMPOS(object):
                     if "/" in text_token[idx]:
                         tmp.append(tuple(text_token[idx].split('/')))
                     if ',' == text_token[idx]:
-                        tmp.append(tuple((',',',')))
+                        tmp.append(tuple((',',','))) # colon
         #print (data)
         return data
 
     def f_loadFileProcess(self, mainPath, paths={}):
+        """
+        Process data files
+        Input: main path of data
+        Output: dict type with {filename : file location}
+        """
         subPaths = os.listdir(mainPath)
         for path in subPaths:
             pathDir = pDir = os.path.join(mainPath, path)
@@ -48,12 +67,17 @@ class HMMPOS(object):
         return paths
 
     def f_createTrainData(self, mainPath):
+        """
+        Making training data
+        Input: training file path
+        Output: list of lists of tuples
+        """
         paths = self.f_loadFileProcess(mainPath)
         labelled_sequences = []
         sentence = []
         tag_set = set()
         symbols = set()
-        tag_re = re.compile(r'[*]|--|[^+*-]+')
+        #tag_re = re.compile(r'[*]|--|[^+*-]+')
         for file, pathFile in paths.items():
             if ".pos" in file and "test" not in file:
                 text = self.f_readFile(pathFile)
@@ -65,7 +89,7 @@ class HMMPOS(object):
                         tag = data_1_text[idx_1][idx_2][1]
                         #print (tag)
                         sentence.append((word,tag))
-                        tag = tag_re.match(tag).group()
+                        #tag = tag_re.match(tag).group()
                         tag_set.add(tag)
                         symbols.add(word) 
                     labelled_sequences.append(sentence)
@@ -76,12 +100,17 @@ class HMMPOS(object):
         return labelled_sequences, list(tag_set), list(symbols)
 
     def f_createTestData(self, mainPath):
+        """
+        Making testing data
+        Input: testing file path
+        Output: list of lists of tuples
+        """
         paths = self.f_loadFileProcess(mainPath)
         labelled_sequences = []
         sentence = []
         tag_set = set()
         symbols = set()
-        tag_re = re.compile(r'[*]|--|[^+*-]+')
+        #tag_re = re.compile(r'[*]|--|[^+*-]+')
         for file, pathFile in paths.items():
             if ".pos" in file and "test" in file:
                 text = self.f_readFile(pathFile)
@@ -93,7 +122,7 @@ class HMMPOS(object):
                         tag = data_1_text[idx_1][idx_2][1]
                         #print (tag)
                         sentence.append((word,tag))
-                        tag = tag_re.match(tag).group()
+                        #tag = tag_re.match(tag).group()
                         tag_set.add(tag)
                         symbols.add(word) 
                     labelled_sequences.append(sentence)
@@ -104,6 +133,10 @@ class HMMPOS(object):
         return labelled_sequences, list(tag_set), list(symbols)
     
     def f_trainHMM(self):
+        """
+        Training HMM 
+        Output: trained model
+        """
         from nltk.probability import LidstoneProbDist
         print("...")
         print("... Training HMM POS tagging")
@@ -117,6 +150,9 @@ class HMMPOS(object):
         return hmm
 
     def f_testHMM(self):
+        """
+        Testing the trained model
+        """
         hmm = self.f_trainHMM()
         labelled_sequences, tag_set,symbols = \
                             self.f_createTestData(r"C:\\Python34\TVplus\HMM_POS_TVplus\Trainset-POS-1")
@@ -127,7 +163,7 @@ class HMMPOS(object):
         print ("...")
 
     def f_run(self):
-        self.f_testHMM()
+        self.f_testHMM()       
 
 def main():
     POS = HMMPOS()
