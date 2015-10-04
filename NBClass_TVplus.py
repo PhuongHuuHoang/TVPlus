@@ -16,6 +16,7 @@ import string
 import math
 import os, os.path
 
+
 class NBClassifier(object):
     "This class is to classify texts using Naive Bayes classification"
 
@@ -25,23 +26,36 @@ class NBClassifier(object):
     def f_rmPunc(self,s):
         "This function is to remove punctuation,..."
         exclude = set(string.punctuation)
-        return ''.join(ch for ch in s if ch not in exclude )
+        return ''.join(ch for ch in s if ch not in exclude)
 
     def f_token(self,text):
-        "This function is to tokenize text"
+        """
+        This function is to tokenize text
+        Input: text
+        Output: token text
+        """
+        import nltk
         text = self.f_rmPunc(text)
         text = text.lower()
-        return re.split("\W+", text)
-
-    def f_countWords(self,words):
-        "This function is to count words after tokenization"
-        wc = {}
-        for word in words:
-            wc[word] = wc.get(word, 0.0) + 1.0
-        return wc
+        return nltk.word_tokenize(text)
+        
+    def f_countWords(self,text):
+        """
+        This function is to count words after tokenization
+        Input: text
+        Output: {word : word count}
+        """
+        word_counts = {}
+        for word in text:
+            word_counts[word] = word_counts.get(word, 0.0) + 1.0
+        return word_counts
     
     def f_fileProcess(self, mainPath, paths = {}):
-        "This function is to process count files and categorize file into class"
+        """
+         This function is to process count files and categorize file into class
+         Input: main path of traning texts
+         Output: {file : file's location}
+        """
         subPaths = os.listdir(mainPath)
         for path in subPaths:
             pathDir = pDir = os.path.join(mainPath, path)
@@ -55,61 +69,60 @@ class NBClassifier(object):
         "Train NB classification"
         V = {}
         priors = {"pos":0.,"neg":0.}
-        self.word_counts = {"pos":{},"neg":{}}
-        self.docs = []
+        self.T_c = {"pos":{},"neg":{}}
+        conProb = {"pos":{},"neg":{}}
         paths = self.f_fileProcess(path_data)         
         for f in paths.items():
             if "pos" == (f[0][0:3]):
                 category = "pos"
             else:
                 category = "neg"
-            self.docs.append((category, f[0]))
             priors[category] += 1
             text = open(f[1]).read()
             words = self.f_token(text)
-            counts = self.f_countWords(words)
-            for word, count in list(counts.items()):
+            word_counts = self.f_countWords(words)
+            for word, count in list(word_counts.items()):
                 if word not in V:
                     V[word] = 0.0  
-                if word not in self.word_counts[category]:
-                    self.word_counts[category][word] = 0.0
+                if word not in self.T_c[category]:
+                    self.T_c[category][word] = 0.0
                 V[word] += count
-                self.word_counts[category][word] += count
+                self.T_c[category][word] += count
+        
+        for category, count in list(self.T_c.items()):
+            #print (category)
+            for word in self.T_c[category]:
+                #print ("test")
+                conProb[category][word] = (self.T_c[category][word]+1)/(sum(self.T_c[category].values())+ len(V))
+        #print (conProb)           
         N = sum(priors.values())
         for category, count in priors.items():
             tmp = (priors[category] / N)
             priors[category] = tmp
-        return V,priors
+        return V,priors,conProb
 
     def f_testNB(self,testPath, trainPath):
         "Test NB classification"
-        V, priors = self.f_trainNB(trainPath)
-        new_doc = open(testPath).read()
-        log_prob_pos = 0.
-        log_prob_neg = 0.
-        words = self.f_token(new_doc)
-        counts = self.f_countWords(words)
-        for w, cnt in list(counts.items()):
-            if w not in V:
-                continue
-            p_word = V[w] / sum(V.values())
-            p_w_given_pos = self.word_counts["pos"].get(w, 0.0) / sum(self.word_counts["pos"].values())
-            p_w_given_neg = self.word_counts["neg"].get(w, 0.0) / sum(self.word_counts["neg"].values())
-
-            if p_w_given_pos > 0:
-                log_prob_pos += math.log(cnt * p_w_given_pos / p_word)
-            if p_w_given_neg > 0:
-                log_prob_neg += math.log(cnt * p_w_given_neg / p_word)
-        pos = math.exp(log_prob_pos + math.log(priors["pos"]))
-        neg = math.exp(log_prob_neg + math.log(priors["neg"]))
-        if pos >= neg:
-            print ("Ronaldo fan")
+        V, priors,conProb = self.f_trainNB(trainPath)
+        test_text = open(testPath).read()      
+        score = {}
+        for category, count in list(self.T_c.items()):
+            score[category] = math.log(priors[category])
+        words = self.f_token(test_text)
+        word_counts = self.f_countWords(words)
+        for w, count in list(word_counts.items()):
+            for category, count in list(self.T_c.items()):
+                if w not in self.T_c[category]:
+                    continue
+                score[category] +=  math.log(conProb[category][w])
+        if score['neg'] >= score['pos']:
+            print ("... Ronaldo Fan")
         else:
-            print("Not Ronaldo fan")
+            print ("... Not Ronaldo Fan")
         
     def f_run(self):
         "This function is for running the program"
-        self.f_testNB(r"C:\\Python34\TVplus\NBclass_TVplus\data\testData\test1.txt", \
+        self.f_testNB(r"C:\\Python34\TVplus\NBclass_TVplus\data\testData\test4.txt", \
                           r"C:\\Python34\TVplus\NBclass_TVplus\\data\trainData")
 
 def main():
@@ -118,5 +131,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
