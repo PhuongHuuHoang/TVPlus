@@ -1,10 +1,8 @@
 #! /user/bin/env python
 """
-    This program is written by Phuong H. Hoang in order to apply
-    into TVplus, data mining position on October 03 2015.
     It is to classify texts using Naive Bayes classification.
     
-    Task: On October 03 2015, Real Madrid make a ceremony to celebrate
+    Task: On October 03 2015, Real Madrid makes a ceremony to celebrate
     all-time goalscorers for Cristian Ronaldo. They posted some pictures in
     the event on Facebook and get comments from followers about Ronaldo.
     Let's classify who are fans of Ronaldo and who are not.
